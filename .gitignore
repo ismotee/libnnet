@@ -1,2 +1,4 @@
 libnnet.project
 libnnet.txt
+Debug/*
+nbproject/*
