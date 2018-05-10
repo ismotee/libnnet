@@ -132,12 +132,12 @@ class NNet {
 	std::vector<std::shared_ptr<HiddenLayer> > hiddenLayers;
 	
         float curve = 1.12;
-        float min = 0.01;
+        float min = 0.1;
         float max = 0.8;
         
 public:
 	NNet();
-	NNet(int numOfInputs, int numOfOutputs, int numOfHiddenLayers);
+	NNet(int numOfOutputs, int numOfHiddenLayers);
 	void linkInput (std::vector<std::shared_ptr<float> > input);
 	void linkHidden (int layerDepth, void* (*method)(std::shared_ptr<NLayer> _upperLayer));
 	void linkHidden (int layerDepth); // default linker. Makes every combination from upper layer.

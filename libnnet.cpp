@@ -290,15 +290,12 @@ NNet::NNet() {
 
 }
 
-NNet::NNet(int numOfInputs, int numOfOutputs, int numOfHiddenLayers) {    
-    inputLayer = std::make_shared<InputLayer> (numOfInputs);
+NNet::NNet(int numOfOutputs, int numOfHiddenLayers) {
+    inputLayer = std::make_shared<InputLayer> ();
     outputLayer = std::make_shared<OutputLayer> (numOfOutputs);
-    inputLayer->setLearningRate(max);
-    outputLayer->setLearningRate(min);
     
     for (int i = 0; i < numOfHiddenLayers; i++) {
         hiddenLayers.push_back(std::make_shared<HiddenLayer>());
-        hiddenLayers.back()->setLearningRate(getLearningrate(i+1));
     }
     outputLayer = std::make_shared<OutputLayer>(numOfOutputs);    
 }
@@ -307,6 +304,7 @@ void NNet::linkInput(std::vector<std::shared_ptr<float> > input) {
     for(auto& in : input) {
         inputLayer->link(in);
     }
+    inputLayer->setLearningRate(max);
 }
 
 
@@ -329,6 +327,7 @@ void NNet::linkHidden(int layerDepth, void*(*method)(std::shared_ptr<NLayer>)) {
     } else {
         hiddenLayers[layerDepth-1]->link(hiddenLayers[layerDepth-2], method);
     }
+    hiddenLayers[0]->setLearningRate(getLearningrate(layerDepth / hiddenLayers.size()+2));
 }
 
 void NNet::linkHidden(int layerDepth) {
@@ -343,6 +342,7 @@ void NNet::linkHidden(int layerDepth) {
 
 void NNet::linkOutput() {
     outputLayer->link(hiddenLayers.back());
+    outputLayer->setLearningRate(min);
 }
 
 
