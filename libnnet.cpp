@@ -226,12 +226,12 @@ void Neuron::back(float desiredOut) {
 void Neuron::back() {
     float sigmoidDelta = (*outputSignal)* (1 - (*outputSignal));
     for (auto& input : inputs) {
-        if (input.getNeuron()) {
             float weight = input.getWeight();
             float errorDelta = learningRate * sigmoidDelta * error * (*input.getInput());
             input.setWeight(weight + errorDelta);
 
             // add error for next layer except if layer is input layer of input is bias
+        if (input.getNeuron()) {
             input.getNeuron()->error += errorDelta * input.getWeight();
         }
     }
@@ -255,9 +255,10 @@ std::vector<float> Neuron::getInputValues() {
 
 std::vector<float> Neuron::getWeights() {
     std::vector<float> result;
-    for(auto& in : inputs) {
-        result.push_back(input.getWeight());
+    for(unsigned int i=0; i<inputs.size(); i++) {
+        result.push_back(inputs[i].getWeight() );
     }
+    return result;
 }
 
 InputLayer::InputLayer() {
@@ -290,14 +291,13 @@ void NLayer::back() {
     }
 }
 
-std::vector<std::vector<float>> getWeights() {
+std::vector<std::vector<float> > NLayer::getWeights() {
     std::vector<std::vector<float> > result;
     for(auto& neuron: layer) {
-	result.push_back(neuron->getWeights());
+	result.push_back(neuron->getWeights() );
     }
     return result;
 }
-
 std::vector<std::shared_ptr<Neuron> >* NLayer::getLayer() {
     return &layer;
 }
@@ -338,6 +338,8 @@ LayerLinkIndexes HiddenLayer::link(std::shared_ptr<NLayer> upperLayer, LinkMetho
             return link(upperLayer, methodAllCombinations);
         case EVERY_COMBINATION_OF_TWO:
             return link(upperLayer, methodEveryCombinationOfTwo);
+        case ONE_SELECTED_AND_ONE_RANDOM:
+            return link(upperLayer, methodOneSelectedAndOneRandom);
         default:
             return std::vector<std::vector<int> >();
     }
@@ -520,11 +522,11 @@ std::vector<float> NNet::getSums() {
 
 std::vector<std::vector<float> > NNet::getWeights (int depth) {
     if(depth <= 0) {
-       return inputLayer.getWeights();
+       return inputLayer->getWeights();
     } else if (depth <= hiddenLayers.size()) {
-       return hiddenLayers[depth - 1].getWeights();
+       return hiddenLayers[depth - 1]->getWeights();
     } else {
-       return outputLayer.getWeights();
+       return outputLayer->getWeights();
     }
 }
 
@@ -557,7 +559,7 @@ void NNet::back(std::vector<float> desiredOut) {
     for (int i = hiddenLayers.size() - 1; i >= 0; i--) {
         hiddenLayers[i]->back();
     }
-    //  inputLayer->back();
+    inputLayer->back();
 
 }
 
