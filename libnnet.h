@@ -2,9 +2,8 @@
 #include <vector>
 #include <memory>
 
-enum LINK_METHOD {RANDOM, RANDOM_EVERY_NEURON_ONCE , ALL, ALL_ONCE};
-enum LAYER_ROLE {INPUT, HIDDEN, OUTPUT};
-
+enum LinkMethod {ALL_COMBINATIONS, EVERY_COMBINATION_OF_TWO, RANDOM};
+typedef std::vector<std::vector<int> > LayerLinkIndexes, *ptr_LayerLinkIndexes;
 /**
  * @class Input
  * @author Ismo Torvinen
@@ -50,14 +49,13 @@ class Neuron
 {
 	float learningRate;
 	std::vector<Input> inputs;
-	float output;
-	float bias;
+	float sum;
 	std::shared_ptr<float> outputSignal;
 
 public:
 	float error;
-	Neuron ();
-	Neuron (std::vector<std::shared_ptr<float> > ins_);
+	Neuron (float bias = -1);
+	Neuron (std::vector<std::shared_ptr<float> > ins_, float bias = -1);
 	void addInput (std::shared_ptr<float> out);
         void addInput (std::shared_ptr<Neuron> neuron);
         void addInputs (std::vector<std::shared_ptr<Neuron> > ins_);
@@ -66,9 +64,10 @@ public:
         void back();
 	// getters and setters
 	std::shared_ptr<float> getOutputSignal();
-	float getOutput();
+	float getSum();
 	float getCurrentError();
         void setLearningRate(float lr);
+        std::vector<float> getInputValues(); 
 };
 
 /**
@@ -82,21 +81,20 @@ public:
  
 class NLayer {
 protected:
-    std::vector<std::shared_ptr<Neuron> > layer;
     
 public:
+        std::vector<std::shared_ptr<Neuron> > layer;
 	void forward();
         void back();
         void setLearningRate(float lr);
         int getLayerSize();
-        std::vector<std::shared_ptr<Neuron> > getLayer();
+        std::vector<std::shared_ptr<Neuron> >* getLayer();
         void clearErrors ();
 };
 
 class InputLayer : public NLayer{	
 public:
 	InputLayer();
-	InputLayer(int numOfInputs);
 	void link(std::shared_ptr<float> input);
 };
 
@@ -105,8 +103,9 @@ protected:
 public:
     HiddenLayer();
     HiddenLayer(int numOfInputs);
-    void link (std::shared_ptr<NLayer> upperLayer, void* (*method)(std::shared_ptr<NLayer> _upLayer));  // predicate for linker function 
-    void link(std::shared_ptr<NLayer> upperLayer);
+    LayerLinkIndexes link (std::shared_ptr<NLayer> upperLayer, LayerLinkIndexes (*method)(NLayer* self, std::shared_ptr<NLayer> _upLayer));  // predicate for linker function 
+    LayerLinkIndexes link (std::shared_ptr<NLayer> upperLayer, LinkMethod METHOD = ALL_COMBINATIONS);
+    LayerLinkIndexes link (std::shared_ptr<NLayer> upperLayer, int numOfNeurons);
 };
 
 class OutputLayer : public NLayer {
@@ -131,22 +130,25 @@ class NNet {
 	std::shared_ptr<OutputLayer> outputLayer;
 	std::vector<std::shared_ptr<HiddenLayer> > hiddenLayers;
 	
-        float curve = 1.12;
-        float min = 0.1;
-        float max = 0.8;
+        float curve = 0.82;
+        float min = 0.01;
+        float max = 0.1;
         
 public:
 	NNet();
 	NNet(int numOfOutputs, int numOfHiddenLayers);
 	void linkInput (std::vector<std::shared_ptr<float> > input);
-	void linkHidden (int layerDepth, void* (*method)(std::shared_ptr<NLayer> _upperLayer));
-	void linkHidden (int layerDepth); // default linker. Makes every combination from upper layer.
+	LayerLinkIndexes linkHidden (int layerDepth, LayerLinkIndexes (*method)(NLayer* self, std::shared_ptr<NLayer> _upperLayer));
+        LayerLinkIndexes linkHidden (int layerDepth, LinkMethod METHOD = ALL_COMBINATIONS);
+        LayerLinkIndexes linkHidden (int layerDepth, int numOfNeurons);
 	void linkOutput (void* (*method)(std::shared_ptr<NLayer> _upperLayer));
         void linkOutput (); // Default linker, all neurons from upper layer to every output
         void setLearningcurve(float curve, float min, float max);
         float getLearningrate(int depth);
-        std::vector<std::shared_ptr<float> > getOutputs();
+        std::vector<std::shared_ptr<float> > getOutputSignals();
+        std::vector<float> getSums();
         
 	void forward();
 	void back(std::vector<float> desiredOut);
+        std::string getStats();
 };
