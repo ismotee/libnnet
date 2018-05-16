@@ -68,6 +68,7 @@ public:
 	float getCurrentError();
         void setLearningRate(float lr);
         std::vector<float> getInputValues(); 
+        std::vector<float> getWeights();
 };
 
 /**
@@ -90,6 +91,7 @@ public:
         int getLayerSize();
         std::vector<std::shared_ptr<Neuron> >* getLayer();
         void clearErrors ();
+        std::vector<std::vector<float> > getWeights();
 };
 
 class InputLayer : public NLayer{	
@@ -147,7 +149,8 @@ public:
         float getLearningrate(int depth);
         std::vector<std::shared_ptr<float> > getOutputSignals();
         std::vector<float> getSums();
-        
+	std::vector<std::vector<float> > getWeights(int depth);        
+
 	void forward();
 	void back(std::vector<float> desiredOut);
         std::string getStats();

@@ -253,6 +253,13 @@ std::vector<float> Neuron::getInputValues() {
     return result;
 }
 
+std::vector<float> Neuron::getWeights() {
+    std::vector<float> result;
+    for(auto& in : inputs) {
+        result.push_back(input.getWeight());
+    }
+}
+
 InputLayer::InputLayer() {
 
 }
@@ -281,6 +288,14 @@ void NLayer::back() {
     for (unsigned int i = 0; i < layer.size(); i++) {
         layer[i]->back();
     }
+}
+
+std::vector<std::vector<float>> getWeights() {
+    std::vector<std::vector<float> > result;
+    for(auto& neuron: layer) {
+	result.push_back(neuron->getWeights());
+    }
+    return result;
 }
 
 std::vector<std::shared_ptr<Neuron> >* NLayer::getLayer() {
@@ -501,6 +516,16 @@ std::vector<float> NNet::getSums() {
         result.push_back(neuron->getSum());
     }
     return result;
+}
+
+std::vector<std::vector<float> > NNet::getWeights (int depth) {
+    if(depth <= 0) {
+       return inputLayer.getWeights();
+    } else if (depth <= hiddenLayers.size()) {
+       return hiddenLayers[depth - 1].getWeights();
+    } else {
+       return outputLayer.getWeights();
+    }
 }
 
 void NNet::setLearningcurve(float _curve, float _min, float _max) {
