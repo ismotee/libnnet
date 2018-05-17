@@ -373,21 +373,25 @@ OutputLayer::OutputLayer(int numOfInputs) {
     }
 }
 
-void OutputLayer::link(std::shared_ptr<NLayer> upperLayer, void*(*method)(std::shared_ptr<NLayer>)) {
-    method(upperLayer);
+LayerLinkIndexes OutputLayer::link(std::shared_ptr<NLayer> upperLayer, LayerLinkIndexes(*method)(std::shared_ptr<NLayer>)) {
+    return method(upperLayer);
 }
 
-void OutputLayer::link(std::shared_ptr<NLayer> upperLayer) {
+LayerLinkIndexes OutputLayer::link(std::shared_ptr<NLayer> upperLayer) {
+    LayerLinkIndexes result;
     std::vector<std::shared_ptr<Neuron> > linkableNeurons;
     for (unsigned int j = 0; j < layer.size(); j++) {
         linkableNeurons.clear();
+        
+        std::vector<int> links;
         for (unsigned int i = 0; i < upperLayer->layer.size(); i++) {
-            if ((int) i % layer.size() == j) {
-                linkableNeurons.push_back(upperLayer->layer[i]);
-            }
+            linkableNeurons.push_back(upperLayer->layer[i]);
+            links.push_back(i);
         }
+        result.push_back(links);
         layer[j]->addInputs(linkableNeurons);
     }
+    return result;
 }
 
 NNet::NNet() {
@@ -487,21 +491,23 @@ LayerLinkIndexes NNet::linkHidden(int layerDepth, int numOfNeurons) {
 
 }
 
-void NNet::linkOutput() {
-    outputLayer->link(hiddenLayers.back());
+LayerLinkIndexes NNet::linkOutput() {
+    LayerLinkIndexes result = outputLayer->link(hiddenLayers.back());
     outputLayer->setLearningRate(min);
+    return result;
 }
 
-void NNet::linkOutput(void* (*method)(std::shared_ptr<NLayer> _upLayer)) {
+LayerLinkIndexes NNet::linkOutput(LayerLinkIndexes (*method)(std::shared_ptr<NLayer> _upLayer)) {
     if (hiddenLayers.empty()) {
         std::cerr << "HiddenLayer: no hidden layers found.\n";
-        return;
+        return LayerLinkIndexes();
     }
     if (!outputLayer) {
         std::cerr << "outputLayer: no output layer found.\n";
-        return;
+        return LayerLinkIndexes();
     }
-    outputLayer->link(hiddenLayers.back(), method);
+    LayerLinkIndexes result = outputLayer->link(hiddenLayers.back(), method);
+    return result;
 }
 
 std::vector<std::shared_ptr<float> > NNet::getOutputSignals() {
