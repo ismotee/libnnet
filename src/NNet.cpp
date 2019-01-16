@@ -1,4 +1,5 @@
 #include <math.h>
+#include <exception>
 
 #include "NNet.h"
 #include "NLayer.h" // for LayerLinksIndices
@@ -7,182 +8,77 @@ NNet::NNet() {
 
 }
 
-NNet::NNet(int numOfOutputs, int numOfHiddenLayers) {
-    inputLayer = std::make_shared<InputLayer> ();
-    outputLayer = std::make_shared<OutputLayer> (numOfOutputs);
-
-    for (int i = 0; i < numOfHiddenLayers; i++) {
-        hiddenLayers.push_back(std::make_shared<HiddenLayer>());
+void NNet::createInputLayerAndLink(std::vector<std::shared_ptr<float> > inputs) {
+    if (!layers.empty()) {
+        std::cerr << "Warning: NNet layers not empty when calling createInputLayerAndLink().\n"
+                << "This command will clear all layer architecture!\n";
     }
-    outputLayer = std::make_shared<OutputLayer>(numOfOutputs);
+    layers.clear();
+    layers.push_back(std::make_shared<InputLayer>());
+    layers.back()->link(inputs);
 }
 
-void NNet::linkInput(std::vector<std::shared_ptr<float> > input) {
-    for (auto& in : input) {
-        inputLayer->link(in);
+void NNet::createHiddenLayerAndLink (int numOfNeurons) {
+    if (layers.empty()) {
+        // this needs a proper wrapping
+        std::cerr << "Error: NNet layer empty when calling createHiddenLayerAndLink().\n"
+                << "Please make input Layer first\n";
+        throw std::exception();
     }
-//    inputLayer->setLearningRate(max);
+ 
+    std::shared_ptr<NLayer> upper = layers.back();
+    layers.push_back(std::make_shared<HiddenLayer>());
+    layers.back()->link(upper, numOfNeurons);
 }
 
-LayerLinkIndices NNet::linkHidden(int layerDepth, LayerLinkIndices(*method)(NLayer* self, std::shared_ptr<NLayer>)) {
-    LayerLinkIndices result;
-    if (hiddenLayers.empty()) {
-        std::cerr << "HiddenLayer: no hidden layers found.\n";
-        return result;
-    }
-    if (!inputLayer) {
-        std::cerr << "InputLayer: no input layer found.\n";
-        return result;
-    }
-    if (layerDepth > (int) hiddenLayers.size()) {
-        std::cerr << "HiddenLayer: no hiddenLayer with depth " << layerDepth << "\n";
-        return result;
-    }
-    if (layerDepth <= 1) {
-        result = hiddenLayers[0]->link(inputLayer, method);
-    } else {
-        result = hiddenLayers[layerDepth - 1]->link(hiddenLayers[layerDepth - 2], method);
-    }
-//    hiddenLayers[0]->setLearningRate(getLearningrate(layerDepth / (hiddenLayers.size() + 2)));
-    return result;
-}
-
-LayerLinkIndices NNet::linkHidden(int layerDepth, LinkMethod METHOD) {
-    LayerLinkIndices result;
-
-    if (hiddenLayers.empty()) {
-        std::cerr << "HiddenLayer: no hidden layers found.\n";
-        return result;
-    }
-    if (!inputLayer) {
-        std::cerr << "InputLayer: no input layer found.\n";
-        return result;
-    }
-    if (layerDepth > (int) hiddenLayers.size()) {
-        std::cerr << "HiddenLayer: no hiddenLayer with depth " << layerDepth << "\n";
-        return result;
+std::vector<std::shared_ptr<float> > NNet::createOutputLayerAndLink(int numOfOutputs) {
+    if (layers.empty()) {
+        // this needs a proper wrapping
+        std::cerr << "Error: NNet layer empty when calling createOutputLayerAndLink().\n"
+                << "Please make other layers first\n";
+        throw std::exception();
     }
 
-    if (layerDepth <= 1) {
-        result = hiddenLayers[0]->link(inputLayer, METHOD);
-    } else {
-        result = hiddenLayers[layerDepth - 1]->link(hiddenLayers[layerDepth - 2], METHOD);
-    }
-//    hiddenLayers[0]->setLearningRate(getLearningrate(layerDepth / hiddenLayers.size() + 2));
-    return result;
-
-}
-
-LayerLinkIndices NNet::linkHidden(int layerDepth, int numOfNeurons) {
-    LayerLinkIndices result;
-
-    if (hiddenLayers.empty()) {
-        std::cerr << "HiddenLayer: no hidden layers found.\n";
-        return result;
-    }
-    if (!inputLayer) {
-        std::cerr << "InputLayer: no input layer found.\n";
-        return result;
-    }
-    if (layerDepth > (int) hiddenLayers.size()) {
-        std::cerr << "HiddenLayer: no hiddenLayer with depth " << layerDepth << "\n";
-        return result;
-    }
-
-    if (layerDepth <= 1) {
-        result = hiddenLayers[0]->link(inputLayer, numOfNeurons);
-    } else {
-        result = hiddenLayers[layerDepth - 1]->link(hiddenLayers[layerDepth - 2], numOfNeurons);
-    }
-//    hiddenLayers[0]->setLearningRate(getLearningrate(layerDepth / hiddenLayers.size() + 2));
-    return result;
-
-
-}
-
-LayerLinkIndices NNet::linkOutput() {
-    LayerLinkIndices result = outputLayer->link(hiddenLayers.back());
-//    outputLayer->setLearningRate(min);
-    return result;
-}
-
-LayerLinkIndices NNet::linkOutput(LayerLinkIndices (*method)(std::shared_ptr<NLayer> _upLayer)) {
-    if (hiddenLayers.empty()) {
-        std::cerr << "HiddenLayer: no hidden layers found.\n";
-        return LayerLinkIndices();
-    }
-    if (!outputLayer) {
-        std::cerr << "outputLayer: no output layer found.\n";
-        return LayerLinkIndices();
-    }
-    LayerLinkIndices result = outputLayer->link(hiddenLayers.back(), method);
-    return result;
+    std::shared_ptr<NLayer> upper = layers.back();
+    layers.push_back(std::make_shared<OutputLayer>());
+    layers.back()->link(upper, numOfOutputs);
+    return layers.back()->getOutputSignals();
 }
 
 std::vector<std::shared_ptr<float> > NNet::getOutputSignals() {
-    std::vector<std::shared_ptr<float> > result;
-    for (auto neuron : (*outputLayer->getLayer())) {
-        result.push_back(neuron->getOutputSignal());
-    }
-    return result;
+    return layers.back()->getOutputSignals();
 }
 
-std::vector<float> NNet::getSums() {
-    std::vector<float> result;
-    for (auto& neuron : (*outputLayer->getLayer())) {
-        result.push_back(neuron->getSum());
-    }
-    return result;
-}
-
-std::vector<std::vector<float> > NNet::getWeights (int depth) {
-    if(depth <= 0) {
-       return inputLayer->getWeights();
-    } else if (depth <= hiddenLayers.size()) {
-       return hiddenLayers[depth - 1]->getWeights();
-    } else {
-       return outputLayer->getWeights();
-    }
-}
 
 void NNet::setLearningcurve(float _curve, float _min, float _max) {
-    curve = _curve;
-    min = _min;
-    max = _max;
 }
 
 float NNet::getLearningrate(int depth) {
-    return std::pow(max - min, curve) * depth + max;
+//    return std::pow(max - min, curve) * depth + max;
+    return 0; 
 }
 
 void NNet::forward() {
-    inputLayer->forward();
-    for (auto hLayer : hiddenLayers) {
-        hLayer->forward();
+
+    for(auto layer : layers) {
+        layer->forward();
     }
-    outputLayer->forward();
 }
 
 void NNet::back(std::vector<float> desiredOut) {
-    inputLayer->clearErrors();
-    for (auto hid : hiddenLayers) {
-        hid->clearErrors();
+    for(auto layer : layers) {
+        layer->clearErrors();
     }
-    outputLayer->clearErrors();
-
-    outputLayer->back(desiredOut);
-    for (int i = hiddenLayers.size() - 1; i >= 0; i--) {
-        hiddenLayers[i]->back();
+    for(int i = layers.size() - 1; i > 0; i--) {
+        std::shared_ptr<NLayer> layer = layers[i];
+        if (i == layers.size()-1) layer->back(desiredOut);
+        layer->back();
     }
-//    inputLayer->back();
-
 }
 
-std::string NNet::getStats() {
-    std::string result = "inputlayer: " + std::to_string(inputLayer->getLayer()->size()) + "\n";
-    for (unsigned int i = 0; i < hiddenLayers.size(); i++) {
-        result += "hiddenlayer" + std::to_string(i) + ": " + std::to_string(hiddenLayers[i]->getLayer()->size()) + "\n";
+void NNet::printStats() {
+    for(auto layer : layers) {
+        std::cout << layer->getType() << ": " 
+            << layer->getLayerSize() << "\n";
     }
-    result += "outputlayer: " + std::to_string(outputLayer->getLayer()->size()) + "\n";
-    return result;
 }

@@ -16,22 +16,15 @@ int main(int argc, char **argv) {
         inputs.push_back(std::make_shared<float>(0));
     }
 
-    std::cout << "creating neural net\n";
-    NNet nn = NNet(NUM_OF_OUTPUTS, 1);
-    std::cout << "creating input neurons\n";
-    nn.linkInput(inputs);
-    outputs = nn.getOutputSignals();
-    std::cout << "creating input neurons from output\n";
-    nn.linkInput(outputs);
-    std::cout << "creating hidden layer\n";
-    nn.linkHidden(1, NUM_OF_HIDDEN_NEURONS);
-    std::cout << "linking output layer\n";
-    nn.linkOutput();
-    std::cout << "done!\n";
-    std::cout << "stats:" << nn.getStats() << "\n";
+    NNet nn;
     std::vector<float> douts(NUM_OF_OUTPUTS, 0);
 
-    for (int i = 0; i < 40000; i++) {
+    nn.createInputLayerAndLink(inputs);
+    nn.createHiddenLayerAndLink(NUM_OF_HIDDEN_NEURONS);
+    outputs = nn.createOutputLayerAndLink(NUM_OF_OUTPUTS);
+    nn.printStats();
+    
+    for (int i = 0; i < 40; i++) {
         douts[0] = i % 4 == 0 ? 1 : 0;
         douts[1] = (i + 1) % 4 == 0 ? 1 : 0;
         douts[2] = (i + 2) % 4 == 0 || (i + 3) % 4 == 0 ? 1 : 0;

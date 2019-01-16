@@ -10,6 +10,7 @@ enum LinkMethod {
 typedef std::vector<std::vector<int> > LayerLinkIndices, *ptr_LayerLinkIndices;
 
 
+
 /**
  * @class NLayer
  * @author Ismo
@@ -26,17 +27,28 @@ public:
     std::vector<std::shared_ptr<Neuron> > layer;
     void forward();
     void back();
+    void back(std::vector<float> desiredOutputs); // used by output layer mainly
+
+    // TODO: make only one link and split others into derived classes
+    void link(std::shared_ptr<NLayer> upperLayer, void(*method)(NLayer* self, std::shared_ptr<NLayer> _upLayer)); // predicate for linker function 
+    void link(std::shared_ptr<NLayer> upperLayer, int numOfNeurons);
+    void link(std::shared_ptr<NLayer> upperLayer);
+    void link(std::shared_ptr<float> input);
+    void link(std::vector<std::shared_ptr<float> > inputs);
+
     void setLearningRate(float lr);
     int getLayerSize();
     std::vector<std::shared_ptr<Neuron> >* getLayer();
+    std::vector<std::shared_ptr<float> > getOutputSignals();
     void clearErrors();
     std::vector<std::vector<float> > getWeights();
+    virtual std::string getType() = 0; // it is a lousy hack
 };
 
 class InputLayer : public NLayer {
 public:
     InputLayer();
-    void link(std::shared_ptr<float> input);
+    std::string getType() {return "Input Layer";} // it is a lousy hack
 };
 
 class HiddenLayer : public NLayer {
@@ -44,16 +56,15 @@ protected:
 public:
     HiddenLayer();
     HiddenLayer(int numOfInputs);
-    LayerLinkIndices link(std::shared_ptr<NLayer> upperLayer, LayerLinkIndices(*method)(NLayer* self, std::shared_ptr<NLayer> _upLayer)); // predicate for linker function 
-    LayerLinkIndices link(std::shared_ptr<NLayer> upperLayer, LinkMethod METHOD = ALL_COMBINATIONS);
-    LayerLinkIndices link(std::shared_ptr<NLayer> upperLayer, int numOfNeurons);
+    std::string getType() { return "Hidden Layer";} // it is a lousy hack
 };
 
 class OutputLayer : public NLayer {
 public:
     OutputLayer();
     OutputLayer(int numOfInputs);
-    LayerLinkIndices link(std::shared_ptr<NLayer> upperLayer, LayerLinkIndices(*method)(std::shared_ptr<NLayer> _upLayer)); // predicate for linker function 
-    LayerLinkIndices link(std::shared_ptr<NLayer> upperLayer); // link all
-    void back(std::vector<float> desiredOutputs);
+    std::string getType() { return "Output Layer";} // it is a lousy hack
 };
+
+void linkAll(NLayer* self, std::shared_ptr<NLayer> upperLayer);
+
