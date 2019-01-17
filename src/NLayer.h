@@ -24,6 +24,11 @@ class NLayer {
 protected:
     std::shared_ptr<float> bias;
 public:
+
+    float learningRate;
+    int inhibitionInterval;
+    float inhibitionTreshold;
+
     std::vector<std::shared_ptr<Neuron> > layer;
     void forward();
     void back();

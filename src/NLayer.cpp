@@ -41,9 +41,7 @@ std::vector<std::shared_ptr<Neuron> >* NLayer::getLayer() {
 }
 
 void NLayer::setLearningRate(float lr) {
-    for (auto neuron : layer) {
-        neuron->setLearningRate(lr);
-    }
+    learningRate = lr;
 }
 
 int NLayer::getLayerSize() {
@@ -62,13 +60,13 @@ void NLayer::link(std::shared_ptr<NLayer> upperLayer, void(*method)(NLayer* self
 
 void NLayer::link(std::shared_ptr<NLayer> upperLayer, int numOfNeurons) {
     for (int i = 0; i < numOfNeurons; i++) {
-        layer.push_back(std::make_shared<Neuron>());
+        layer.push_back(std::make_shared<Neuron>(*this));
     }
     link(upperLayer, linkAll);
 }
 
 void NLayer::link(std::shared_ptr<float> input) {
-    layer.push_back(std::make_shared<Neuron>());
+    layer.push_back(std::make_shared<Neuron>(*this));
     layer.back()->addInput(input, 1);
 }
 
@@ -88,32 +86,49 @@ std::vector<std::shared_ptr<float> > NLayer::getOutputSignals() {
 
 
 InputLayer::InputLayer() {
+    learningRate = 0.1;
+    inhibitionInterval = 0;
+    inhibitionTreshold = 0.7;
     bias = std::make_shared<float>(1);
-    layer.push_back(std::make_shared<Neuron>());
+    layer.push_back(std::make_shared<Neuron>(*this));
     layer.back()->addInput(bias);
 }
 
 
 
 HiddenLayer::HiddenLayer() {
+    learningRate = 0.1;
+    inhibitionInterval = 1;
+    inhibitionTreshold = 0.7;
     bias = std::make_shared<float>(1);
-    layer.push_back(std::make_shared<Neuron>());
+    layer.push_back(std::make_shared<Neuron>(*this));
     layer.back()->addInput(bias);
 }
 
 HiddenLayer::HiddenLayer(int numOfInputs) {
+    learningRate = 0.1;
+    inhibitionInterval = 1;
+    inhibitionTreshold = 0.7;
+    bias = std::make_shared<float>(1);
     for (int i = 0; i < numOfInputs; i++) {
-        layer.push_back(std::make_shared<Neuron>());
+        layer.push_back(std::make_shared<Neuron>(*this));
+        layer.back()->addInput(bias);
     }
 }
 
 
 OutputLayer::OutputLayer() {
+    learningRate = 0.1;
+    inhibitionInterval = 0;
+    inhibitionTreshold = 0.7;
 
 }
 
 OutputLayer::OutputLayer(int numOfInputs) {
+    learningRate = 0.1;
+    inhibitionInterval = 0;
+    inhibitionTreshold = 0.7;
     for (int i = 0; i < numOfInputs; i++) {
-        layer.push_back(std::make_shared<Neuron>());
+        layer.push_back(std::make_shared<Neuron>(*this));
     }
 }

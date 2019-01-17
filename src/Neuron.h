@@ -2,6 +2,7 @@
 #include "Input.h"
 #include <vector>
 #include <memory>
+#include "NLayer.h"
 
 /**
  * @class Neuron
@@ -12,17 +13,21 @@
  * Neuron takes care of inhibition as well as data that is needed for back propagation training of Input.
  */
 
+class NLayer;
+
 class Neuron {
-    bool isInputNeuron;
-    float learningRate;
+
+    NLayer* layer;
+
     std::vector<Input> inputs;
     float sum;
     std::shared_ptr<float> outputSignal;
+    int inhibitor;
 
 public:
     float error;
-    Neuron();
-    Neuron(std::vector<std::shared_ptr<float> > ins_);
+    Neuron(NLayer& parentLayer);
+    Neuron(NLayer& parentLayer, std::vector<std::shared_ptr<float> > ins_);
     void addInput(std::shared_ptr<float> out);
     void addInput(std::shared_ptr<float> out, float weight);
     void addInput(std::shared_ptr<Neuron> neuron);
@@ -34,8 +39,6 @@ public:
     std::shared_ptr<float> getOutputSignal();
     float getSum();
     float getCurrentError();
-    void setLearningRate(float lr);
     std::vector<float> getInputValues();
     std::vector<float> getWeights();
-
 };

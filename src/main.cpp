@@ -5,7 +5,7 @@
 
 const int NUM_OF_INPUTS = 2;
 const int NUM_OF_OUTPUTS = 3;
-const int NUM_OF_HIDDEN_NEURONS = 8;
+const int NUM_OF_HIDDEN_NEURONS = 20;
 
 int main(int argc, char **argv) {
     std::cout << "making input signals\n";
@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
     outputs = nn.createOutputLayerAndLink(NUM_OF_OUTPUTS);
     nn.printStats();
     
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 4000; i++) {
         douts[0] = i % 4 == 0 ? 1 : 0;
         douts[1] = (i + 1) % 4 == 0 ? 1 : 0;
         douts[2] = (i + 2) % 4 == 0 || (i + 3) % 4 == 0 ? 1 : 0;
